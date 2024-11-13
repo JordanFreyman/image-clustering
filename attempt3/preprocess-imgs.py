@@ -16,14 +16,14 @@ val_datagen = ImageDataGenerator(rescale=1./255)  # Only normalization for valid
 
 # Load and iterate training and validation datasets
 train_generator = train_datagen.flow_from_directory(
-    "C:/Users/jfrey/Documents/Stuff I've made/cis4930 data mining/attempt3/animals/train",  # Replace with your actual train directory path
+    "C:/Users/jfrey/Documents/GitHub/image-clustering/attempt3/animals/train",  # Replace with your actual train directory path
     target_size=(128, 128),  # Resize all images to 128x128 pixels
     batch_size=32,  # Batch size
     class_mode='categorical'  # Multi-class classification
 )
 
 val_generator = val_datagen.flow_from_directory(
-    "C:/Users/jfrey/Documents/Stuff I've made/cis4930 data mining/attempt3/animals/val",  # Replace with your actual validation directory path
+    "C:/Users/jfrey/Documents/GitHub/image-clustering/attempt3/animals/val",  # Replace with your actual validation directory path
     target_size=(128, 128),  # Resize all images to 128x128 pixels
     batch_size=32,  # Batch size
     class_mode='categorical'  # Multi-class classification
