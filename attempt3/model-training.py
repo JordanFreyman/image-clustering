@@ -1,3 +1,4 @@
+from sklearn.cluster import KMeans
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import VGG16
@@ -71,15 +72,17 @@ plt.legend()
 plt.show()
 
 # Feature Extraction and Dimensionality Reduction
-# Create a feature extractor from base_model directly (avoiding reusing model layers)
 feature_extractor = models.Model(inputs=base_model.input, outputs=base_model.output)
-
-# Extract features from the training set
 train_features = feature_extractor.predict(train_generator, steps=train_generator.samples // train_generator.batch_size)
-train_features = train_features.reshape(train_features.shape[0], -1)  # Flatten for PCA
+train_features = train_features.reshape(train_features.shape[0], -1)
 
 # Apply PCA
 pca = PCA(n_components=50)
 reduced_features = pca.fit_transform(train_features)
 
-# `reduced_features` can now be used in clustering
+# Apply Clustering
+kmeans = KMeans(n_clusters=5, random_state=42)  # Adjust n_clusters based on your needs
+cluster_labels = kmeans.fit_predict(reduced_features)
+
+# Output cluster labels
+print("Cluster labels:", cluster_labels)
