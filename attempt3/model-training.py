@@ -4,67 +4,64 @@ from tensorflow.keras.applications import VGG16
 from tensorflow.keras import layers, models
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
-import numpy as np
 import matplotlib.pyplot as plt
-import os
-import random
-from PIL import Image
+import numpy as np
 
 # Set paths to your dataset directories
 train_dir = "C:/Users/jfrey/Documents/GitHub/image-clustering/attempt3/animals/train"
-val_dir = "C:/Users/jfrey/Documents/GitHub/image-clustering/attempt3/animals/val"
+val_dir = "C:/Users/jfrey/Documents/GitHub/image-clustering/attempt3/animals/train"
 
 # Initialize ImageDataGenerators for training and validation
 train_datagen = ImageDataGenerator(rescale=1./255)
-
-# Create data generator for loading a smaller sample of the images to speed up testing
 train_generator = train_datagen.flow_from_directory(
     train_dir,
     target_size=(128, 128),
-    batch_size=16,  # Reduce batch size to make initial runs faster
+    batch_size=32,
     class_mode='categorical',
-    shuffle=False  # Disable shuffling to make cluster visualization easier
+    shuffle=False  # Set shuffle to False for consistent feature extraction
 )
 
-# Load a pre-trained VGG16 model for feature extraction, excluding the final classification layers
+# Load the VGG16 model without the top layer (use pre-trained weights)
 base_model = VGG16(weights='imagenet', include_top=False, input_shape=(128, 128, 3))
-base_model.trainable = False  # Freeze layers
+base_model.trainable = False  # Freeze the base model layers
 
-# Define a model to output features
+# Feature extraction model
 feature_extractor = models.Model(inputs=base_model.input, outputs=layers.GlobalAveragePooling2D()(base_model.output))
 
-# Extract features from images
-features = feature_extractor.predict(train_generator, steps=train_generator.samples // train_generator.batch_size, verbose=1)
+# Extract features for clustering
+features = feature_extractor.predict(train_generator, steps=train_generator.samples // train_generator.batch_size)
+features = features.reshape(features.shape[0], -1)  # Flatten if needed
 
-# Apply PCA for dimensionality reduction
-pca = PCA(n_components=50)
+# Apply PCA to reduce dimensions to 2D for visualization
+pca = PCA(n_components=2)
 reduced_features = pca.fit_transform(features)
 
-# Perform K-Means clustering
-n_clusters = 5
-kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-kmeans.fit(reduced_features)
-cluster_labels = kmeans.labels_
-print("Cluster labels:", cluster_labels)
+# Apply KMeans clustering directly to the 2D PCA-reduced features
+kmeans = KMeans(n_clusters=5, random_state=42)
+cluster_labels = kmeans.fit_predict(reduced_features)
 
-# Visualize a sample of images from each cluster
-def visualize_clusters(train_dir, cluster_labels, n_clusters=5, num_images=5):
-    fig, axs = plt.subplots(n_clusters, num_images, figsize=(15, 8))
-    fig.suptitle("Sample Images from Each Cluster")
-    
-    for cluster in range(n_clusters):
-        cluster_indices = np.where(cluster_labels == cluster)[0]
-        sample_indices = random.sample(list(cluster_indices), min(num_images, len(cluster_indices)))
-        
-        for i, img_index in enumerate(sample_indices):
-            img_path = train_generator.filepaths[img_index]
-            img = Image.open(img_path).resize((128, 128))
-            axs[cluster, i].imshow(img)
-            axs[cluster, i].axis("off")
-            axs[cluster, i].set_title(f"Cluster {cluster}")
-    
-    plt.tight_layout()
-    plt.subplots_adjust(top=0.9)
-    plt.show()
+# Define animal class names based on the order in your dataset
+animal_classes = ["Cat", "Dog", "Elephant", "Lion", "Horse"]
 
-visualize_clusters(train_dir, cluster_labels)
+# Select a subset of samples to visualize (e.g., first 500 samples for clarity)
+sample_indices = np.random.choice(len(reduced_features), size=500, replace=False)
+sampled_features = reduced_features[sample_indices]
+sampled_labels = cluster_labels[sample_indices]
+sampled_classes = [animal_classes[label] for label in sampled_labels]
+
+# Plot the clustered data with labels
+plt.figure(figsize=(10, 8))
+for i, animal in enumerate(animal_classes):
+    indices = [j for j, label in enumerate(sampled_labels) if label == i]
+    plt.scatter(sampled_features[indices, 0], sampled_features[indices, 1], label=animal, alpha=0.6)
+
+# Plot cluster centers
+centers = kmeans.cluster_centers_
+plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, alpha=0.75, marker='X', label='Centroids')
+
+# Add legend and titles
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+plt.title("Animal Image Clusters (Labeled by Class)")
+plt.legend()
+plt.show()
