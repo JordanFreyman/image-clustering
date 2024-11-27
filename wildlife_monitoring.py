@@ -4,7 +4,7 @@ import time
 import matplotlib.pyplot as plt
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.applications import VGG16, ResNet50
+from tensorflow.keras.applications import VGG16, ResNet50, EfficientNetB0
 from sklearn.decomposition import IncrementalPCA
 from sklearn.cluster import MiniBatchKMeans
 
@@ -24,6 +24,7 @@ def cache_data(path, data=None):
 train_dir = r"C:/Users/jfrey/Documents/GitHub/wildlife-monitoring/snapshot-serengeti"
 feature_cache_path_vgg16 = "./cached_features_vgg16.npy"
 feature_cache_path_resnet50 = "./cached_features_resnet50.npy"
+feature_cache_path_effnetb0 = "./cached_features_effnetb0.npy"
 
 # Validate paths
 if not os.path.exists(train_dir):
@@ -57,6 +58,8 @@ def load_feature_extractor(model_name='VGG16'):
         base_model = VGG16(weights='imagenet', include_top=False, input_shape=(128, 128, 3))
     elif model_name == 'ResNet50':
         base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(128, 128, 3))
+    elif model_name == 'EfficientNetB0':
+        base_model = EfficientNetB0(weights='imagenet', include_top=False, input_shape=(128, 128, 3))
     else:
         raise ValueError(f"Model {model_name} is not supported.")
     
@@ -126,7 +129,7 @@ def visualize_cluster_samples(cluster_labels, filepaths, cluster_id, num_samples
     plt.show()
 
 # Compare VGG16 and ResNet50
-for model_name, feature_cache_path in zip(['VGG16', 'ResNet50'], [feature_cache_path_vgg16, feature_cache_path_resnet50]):
+for model_name, feature_cache_path in zip(['VGG16', 'ResNet50', 'EfficientNetB0'], [feature_cache_path_vgg16, feature_cache_path_resnet50, feature_cache_path_effnetb0]):
     # Load model and check for cached features
     feature_extractor = load_feature_extractor(model_name)
     features = cache_data(feature_cache_path)
@@ -151,4 +154,4 @@ for model_name, feature_cache_path in zip(['VGG16', 'ResNet50'], [feature_cache_
     for cluster_id in range(10):
         visualize_cluster_samples(cluster_labels, filepaths, cluster_id)
 
-print_progress("Clustering analysis completed for both models.")
+print_progress("Clustering analysis completed for all three models.")
