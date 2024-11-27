@@ -1,12 +1,14 @@
-# image_clustering.py
+# wildlife_monitoring.py
 """
-Animal Image Clustering with PCA and KMeans
+Wildlife Monitoring with PCA and KMeans
 Author: Jordan Freyman
-Description: This script processes animal image data, extracts features using a pre-trained VGG16 model, 
-applies PCA for dimensionality reduction, and clusters the data using KMeans. Visualizations are provided for analysis.
+Description: This script processes wildlife image data (Snapshot Serengeti subset), 
+extracts features using a pre-trained VGG16 model, applies PCA for dimensionality reduction, 
+and clusters the data using KMeans. The goal is to support animal conservation efforts 
+through automated species recognition and clustering.
 Credit attributed to ChatGPT for assistance in script development.
 """
-
+import unittest
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import VGG16
@@ -22,9 +24,10 @@ import os
 def print_progress(message):
     print(f"[{time.strftime('%H:%M:%S')}] {message}")
 
-# Set paths to your dataset directories
-train_dir = r"C:/Users/jfrey/Documents/GitHub/image-clustering/attempt3/animals/train"
-val_dir = r"C:/Users/jfrey/Documents/GitHub/image-clustering/attempt3/animals/val"
+# Set paths to your Snapshot Serengeti dataset directories
+data_dir = r"C:/Users/jfrey/Documents/GitHub/wildlife-monitoring/snapshot-serengeti"
+train_dir = os.path.join(data_dir, "train")
+val_dir = os.path.join(data_dir, "val")
 
 # Validate paths
 if not os.path.exists(train_dir) or not os.path.exists(val_dir):
@@ -34,7 +37,7 @@ if not os.path.exists(train_dir) or not os.path.exists(val_dir):
 print_progress("Initializing image data generators...")
 train_datagen = ImageDataGenerator(
     rescale=1./255, 
-    rotation_range=40,
+    rotation_range=30,
     width_shift_range=0.2,
     height_shift_range=0.2,
     shear_range=0.2,
@@ -82,8 +85,8 @@ print_progress("Clustering with KMeans...")
 kmeans = KMeans(n_clusters=5, random_state=42)
 cluster_labels = kmeans.fit_predict(reduced_features)
 
-# Define animal class names based on the dataset
-animal_classes = ["Cat", "Dog", "Elephant", "Lion", "Horse"]
+# Define wildlife class names based on the dataset
+wildlife_classes = ["Zebra", "Lion", "Elephant", "Gazelle", "Hyena"]
 
 # Visualization of clustered data
 print_progress("Visualizing clusters...")
@@ -92,7 +95,7 @@ sampled_features = reduced_features[sample_indices]
 sampled_labels = cluster_labels[sample_indices]
 
 plt.figure(figsize=(10, 8))
-for i, animal in enumerate(animal_classes):
+for i, animal in enumerate(wildlife_classes):
     indices = [j for j, label in enumerate(sampled_labels) if label == i]
     plt.scatter(sampled_features[indices, 0], sampled_features[indices, 1], label=animal, alpha=0.6)
 
@@ -101,7 +104,7 @@ plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, alpha=0.75, marker='
 
 plt.xlabel("PCA Component 1")
 plt.ylabel("PCA Component 2")
-plt.title("Animal Image Clusters")
+plt.title("Wildlife Clusters for Conservation Analysis")
 plt.legend()
 plt.show()
 
